@@ -1,6 +1,6 @@
 # Murphy
 
-_An opiniated view on JSON APIs, and a short implementation in Golang._
+_An opinionated view on JSON APIs, and a short implementation in Golang._
 
 __tl;dr__
 
