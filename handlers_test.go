@@ -2,11 +2,12 @@ package murphy
 
 import (
 	"io/ioutil"
-	"main/util/errors"
-	"main/util/httpstub"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/pascallouisperez/goutil/errors"
+	"github.com/pascallouisperez/goutil/httpstub"
 
 	. "gopkg.in/check.v1"
 )

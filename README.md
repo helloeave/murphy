@@ -1,5 +1,8 @@
 # Murphy
 
+[![Build Status](https://travis-ci.org/pascallouisperez/murphy.svg?branch=master)](https://travis-ci.org/pascallouisperez/murphy)
+[![GoDoc](https://godoc.org/github.com/pascallouisperez/murphy?status.svg)](https://godoc.org/github.com/pascallouisperez/murphy)
+
 _An opinionated view on JSON APIs, and a short implementation in Golang._
 
 __tl;dr__

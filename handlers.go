@@ -2,11 +2,11 @@ package murphy
 
 import (
 	"encoding/json"
-	"main/util/errors"
 	"net/http"
 	"reflect"
 
 	"github.com/golang/glog"
+	"github.com/pascallouisperez/goutil/errors"
 	"github.com/pascallouisperez/reflext"
 	go_uuid "github.com/satori/go.uuid"
 )

@@ -1,8 +1,8 @@
 package murphy
 
 import (
-	"main/util/values"
 	"net/http"
+	"time"
 )
 
 // responseWriter is the http.ResponseWriter given to wrapped handlers. It
@@ -22,13 +22,13 @@ func (w *responseWriter) WriteHeader(status int) {
 type HttpContext interface {
 	W() http.ResponseWriter
 	R() *http.Request
-	Now() values.DateTime
+	Now() time.Time
 }
 
 type httpContext struct {
 	w   http.ResponseWriter
 	r   *http.Request
-	now values.DateTime
+	now time.Time
 }
 
 // Assert that httpContext implements HttpContext interface.
@@ -38,7 +38,7 @@ func NewHttpContext(w http.ResponseWriter, r *http.Request) HttpContext {
 	return &httpContext{
 		w:   w,
 		r:   r,
-		now: values.Now(),
+		now: time.Now(),
 	}
 }
 
@@ -50,6 +50,6 @@ func (c *httpContext) R() *http.Request {
 	return c.r
 }
 
-func (c *httpContext) Now() values.DateTime {
+func (c *httpContext) Now() time.Time {
 	return c.now
 }
