@@ -31,7 +31,7 @@ func fails(ctx HttpContext, request *sampleRequest, response *sampleResponse) er
 }
 
 func badRequestWithinHandler(ctx HttpContext, request *sampleRequest, response *sampleResponse) error {
-	return BadRequestErrorf("a b c")
+	return BadRequestErrorf("%s %s %s", "a", "b", "c")
 }
 
 func (_ *MurphySuite) TestHandlerOf(c *C) {
@@ -46,7 +46,7 @@ func (_ *MurphySuite) TestJsonHandler_badRequest(c *C) {
 	JsonHandler(correct)(w, r)
 
 	c.Assert(w.RecordedCode, Equals, http.StatusBadRequest)
-	c.Assert(w.RecordedBody, Equals, "")
+	c.Assert(w.RecordedBody, Equals, "{\"err\":\"unable to parse request\"}\n")
 }
 
 func (_ *MurphySuite) TestJsonHandler_good(c *C) {
@@ -76,7 +76,7 @@ func (_ *MurphySuite) TestJsonHandler_badRequestWithinHandler(c *C) {
 	JsonHandler(badRequestWithinHandler)(w, r)
 
 	c.Assert(w.RecordedCode, Equals, http.StatusBadRequest)
-	c.Assert(w.RecordedBody, Equals, "")
+	c.Assert(w.RecordedBody, Equals, "{\"err\":\"a b c\"}\n")
 }
 
 func markAsUnauthorized(ctx HttpContext, request *sampleRequest, response *sampleResponse) error {

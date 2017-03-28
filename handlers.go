@@ -2,6 +2,7 @@ package murphy
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"reflect"
 
@@ -51,7 +52,7 @@ func (m *handlerMaker) makeHandler() func(http.ResponseWriter, *http.Request) {
 
 		requestPtr := reflect.New(m.requestType)
 		if err := json.NewDecoder(r.Body).Decode(requestPtr.Interface()); err != nil {
-			handleBadRequestErr(w, r, BadRequestErrorf("%s", err))
+			handleBadRequestErr(w, r, BadRequestErrorf("unable to parse request"))
 			return
 		}
 
@@ -95,7 +96,7 @@ var _ error = &BadRequestError{}
 
 func BadRequestErrorf(format string, args ...interface{}) *BadRequestError {
 	return &BadRequestError{
-		error: errors.New(format, args...),
+		error: fmt.Errorf(format, args...),
 	}
 }
 
@@ -107,8 +108,9 @@ func handleBadRequestErr(w http.ResponseWriter, r *http.Request, theErr *BadRequ
 	errId := go_uuid.NewV4().String()
 	w.Header().Set("X-Errid", errId)
 	w.WriteHeader(http.StatusBadRequest)
-	if canShowErr(r) {
-		w.Write([]byte(theErr.Error()))
+	encoder := json.NewEncoder(w)
+	if err := encoder.Encode(map[string]string{"err": theErr.Error()}); err != nil {
+		// What now? Too bad.
 	}
 	glog.Errorf("errId=%s, err=%s", errId, theErr)
 }
