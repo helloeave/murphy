@@ -1,6 +1,7 @@
 package murphy
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -92,4 +93,10 @@ func (_ *MurphySuite) TestJsonHandler_handlerMarksRequestAsUnauthorized(c *C) {
 
 	c.Assert(w.RecordedCode, Equals, http.StatusUnauthorized)
 	c.Assert(w.RecordedBody, Equals, "")
+}
+
+func (_ *MurphySuite) TestBadRequestError_marshalling(c *C) {
+	data, err := json.Marshal(BadRequestErrorf("the_err_here"))
+	c.Assert(err, IsNil)
+	c.Assert(`{"err":"the_err_here"}`, Equals, string(data))
 }

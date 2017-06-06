@@ -87,6 +87,9 @@ func (m *handlerMaker) makeHandler() func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+// BadRequestError is the specific error which handlers can return to Murphy
+// to signal that the request was erroneous, and therefore a 400 status should
+// be returned (as opposed to a 500).
 type BadRequestError struct {
 	error
 }
@@ -94,6 +97,17 @@ type BadRequestError struct {
 // Assert that BadRequestError implements the error interface.
 var _ error = &BadRequestError{}
 
+// Assert that BadRequestError implements the json.Marshaler interface.
+var _ json.Marshaler = &BadRequestError{}
+
+// MarshalJSON marshalls a BadRequestError as a JSON object with a single entry
+// `err` which contains the string representation of the error it wraps.
+func (e BadRequestError) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]string{"err": e.Error()})
+}
+
+// BadRequestErrorf constructs a BadRequestError in a similar fashion than
+// one would use `fmt.Errorf`.
 func BadRequestErrorf(format string, args ...interface{}) *BadRequestError {
 	return &BadRequestError{
 		error: fmt.Errorf(format, args...),
@@ -109,7 +123,7 @@ func handleBadRequestErr(w http.ResponseWriter, r *http.Request, theErr *BadRequ
 	w.Header().Set("X-Errid", errId)
 	w.WriteHeader(http.StatusBadRequest)
 	encoder := json.NewEncoder(w)
-	if err := encoder.Encode(map[string]string{"err": theErr.Error()}); err != nil {
+	if err := encoder.Encode(theErr); err != nil {
 		// What now? Too bad.
 	}
 	glog.Errorf("errId=%s, err=%s", errId, theErr)
