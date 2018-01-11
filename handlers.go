@@ -3,6 +3,7 @@ package murphy
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"reflect"
 
@@ -46,12 +47,17 @@ type handlerMaker struct {
 	requestType, responseType reflect.Type
 }
 
+var emptyStructType = reflect.TypeOf(struct{}{})
+
 func (m *handlerMaker) makeHandler() func(http.ResponseWriter, *http.Request) {
 	return func(actualW http.ResponseWriter, r *http.Request) {
 		w := &responseWriter{actualW, false}
 
 		requestPtr := reflect.New(m.requestType)
-		if err := json.NewDecoder(r.Body).Decode(requestPtr.Interface()); err != nil {
+		err := json.NewDecoder(r.Body).Decode(requestPtr.Interface())
+		if err == io.EOF && m.requestType != emptyStructType {
+			handleBadRequestErr(w, r, BadRequestErrorf("unable to parse request; did not expect empty body"))
+		} else if err != nil {
 			handleBadRequestErr(w, r, BadRequestErrorf("unable to parse request"))
 			return
 		}
