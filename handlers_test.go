@@ -29,7 +29,7 @@ func correct(ctx HttpContext, request *sampleRequest, response *sampleResponse) 
 	return nil
 }
 
-func correctEmptyRequest(ctx HttpContext, request *struct{}, response *sampleResponse) error {
+func correctEmptyRequest(ctx HttpContext, _ *struct{}, response *sampleResponse) error {
 	return nil
 }
 
