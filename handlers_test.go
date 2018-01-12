@@ -29,6 +29,10 @@ func correct(ctx HttpContext, request *sampleRequest, response *sampleResponse) 
 	return nil
 }
 
+func correctEmptyRequest(ctx HttpContext, request *struct{}, response *sampleResponse) error {
+	return nil
+}
+
 func fails(ctx HttpContext, request *sampleRequest, response *sampleResponse) error {
 	return errors.New("a b c")
 }
@@ -52,16 +56,6 @@ func (_ *MurphySuite) TestJsonHandler_badRequest(c *C) {
 	c.Assert(w.RecordedBody, Equals, "{\"err\":\"unable to parse request\"}\n")
 }
 
-func (_ *MurphySuite) TestJsonHandler_unexpectedEmptyRequest(c *C) {
-	w, r := httpstub.New(c)
-	r.Body = ioutil.NopCloser(strings.NewReader(""))
-
-	JsonHandler(correct)(w, r)
-
-	c.Assert(w.RecordedCode, Equals, http.StatusBadRequest)
-	c.Assert(w.RecordedBody, Equals, "{\"err\":\"unable to parse request; did not expect empty body\"}\n")
-}
-
 func (_ *MurphySuite) TestJsonHandler_good(c *C) {
 	w, r := httpstub.New(c)
 	r.Body = ioutil.NopCloser(strings.NewReader("{}"))
@@ -70,6 +64,26 @@ func (_ *MurphySuite) TestJsonHandler_good(c *C) {
 
 	c.Assert(w.RecordedCode, Equals, http.StatusOK)
 	c.Assert(w.RecordedBody, Equals, "{}\n")
+}
+
+func (_ *MurphySuite) TestJsonHandler_expectedEmptyRequest(c *C) {
+	w, r := httpstub.New(c)
+	r.Body = ioutil.NopCloser(strings.NewReader(""))
+
+	JsonHandler(correctEmptyRequest)(w, r)
+
+	c.Assert(w.RecordedCode, Equals, http.StatusOK)
+	c.Assert(w.RecordedBody, Equals, "{}\n")
+}
+
+func (_ *MurphySuite) TestJsonHandler_unexpectedEmptyRequest(c *C) {
+	w, r := httpstub.New(c)
+	r.Body = ioutil.NopCloser(strings.NewReader(""))
+
+	JsonHandler(correct)(w, r)
+
+	c.Assert(w.RecordedCode, Equals, http.StatusBadRequest)
+	c.Assert(w.RecordedBody, Equals, "{\"err\":\"unable to parse request; did not expect empty body\"}\n")
 }
 
 func (_ *MurphySuite) TestJsonHandler_fails(c *C) {
