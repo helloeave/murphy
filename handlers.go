@@ -47,17 +47,18 @@ type handlerMaker struct {
 	requestType, responseType reflect.Type
 }
 
-var emptyStructType = reflect.TypeOf(struct{}{})
-
 func (m *handlerMaker) makeHandler() func(http.ResponseWriter, *http.Request) {
 	return func(actualW http.ResponseWriter, r *http.Request) {
 		w := &responseWriter{actualW, false}
 
 		requestPtr := reflect.New(m.requestType)
+		numReqFields := reflect.ValueOf(requestPtr.Elem().Interface()).NumField()
+
 		err := json.NewDecoder(r.Body).Decode(requestPtr.Interface())
-		if err == io.EOF && m.requestType != emptyStructType {
+		if err == io.EOF && numReqFields > 0 {
 			handleBadRequestErr(w, r, BadRequestErrorf("unable to parse request; did not expect empty body"))
-		} else if err != nil {
+			return
+		} else if err != nil && err != io.EOF {
 			handleBadRequestErr(w, r, BadRequestErrorf("unable to parse request"))
 			return
 		}
