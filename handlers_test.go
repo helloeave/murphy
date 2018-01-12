@@ -19,11 +19,17 @@ type MurphySuite struct{}
 
 var _ = Suite(&MurphySuite{})
 
-type sampleRequest struct{}
+type sampleRequest struct {
+	Foo string `json:"foo"`
+}
 
 type sampleResponse struct{}
 
 func correct(ctx HttpContext, request *sampleRequest, response *sampleResponse) error {
+	return nil
+}
+
+func correctEmptyRequest(ctx HttpContext, _ *struct{}, response *sampleResponse) error {
 	return nil
 }
 
@@ -42,7 +48,7 @@ func (_ *MurphySuite) TestHandlerOf(c *C) {
 
 func (_ *MurphySuite) TestJsonHandler_badRequest(c *C) {
 	w, r := httpstub.New(c)
-	r.Body = ioutil.NopCloser(strings.NewReader(""))
+	r.Body = ioutil.NopCloser(strings.NewReader(`{"foo": not-a-string}`))
 
 	JsonHandler(correct)(w, r)
 
@@ -58,6 +64,26 @@ func (_ *MurphySuite) TestJsonHandler_good(c *C) {
 
 	c.Assert(w.RecordedCode, Equals, http.StatusOK)
 	c.Assert(w.RecordedBody, Equals, "{}\n")
+}
+
+func (_ *MurphySuite) TestJsonHandler_expectedEmptyRequest(c *C) {
+	w, r := httpstub.New(c)
+	r.Body = ioutil.NopCloser(strings.NewReader(""))
+
+	JsonHandler(correctEmptyRequest)(w, r)
+
+	c.Assert(w.RecordedCode, Equals, http.StatusOK)
+	c.Assert(w.RecordedBody, Equals, "{}\n")
+}
+
+func (_ *MurphySuite) TestJsonHandler_unexpectedEmptyRequest(c *C) {
+	w, r := httpstub.New(c)
+	r.Body = ioutil.NopCloser(strings.NewReader(""))
+
+	JsonHandler(correct)(w, r)
+
+	c.Assert(w.RecordedCode, Equals, http.StatusBadRequest)
+	c.Assert(w.RecordedBody, Equals, "{\"err\":\"unable to parse request; did not expect empty body\"}\n")
 }
 
 func (_ *MurphySuite) TestJsonHandler_fails(c *C) {
