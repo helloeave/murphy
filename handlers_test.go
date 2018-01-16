@@ -19,11 +19,18 @@ type MurphySuite struct{}
 
 var _ = Suite(&MurphySuite{})
 
-type sampleRequest struct{}
+type sampleRequest struct {
+	Foo string `json:"foo"`
+	Bar int    `json:"bar"`
+}
 
 type sampleResponse struct{}
 
 func correct(ctx HttpContext, request *sampleRequest, response *sampleResponse) error {
+	return nil
+}
+
+func correctEmptyRequestStruct(ctx HttpContext, _ *struct{}, response *sampleResponse) error {
 	return nil
 }
 
@@ -40,9 +47,35 @@ func (_ *MurphySuite) TestHandlerOf(c *C) {
 	c.Assert(err, IsNil)
 }
 
+func (_ *MurphySuite) TestJsonHandler_numTimesInvoked(c *C) {
+	cases := map[string]int{
+		``:   1,
+		`{}`: 1,
+		`{"foo":"str str str"}`:          1,
+		`{"bar": 123}`:                   1,
+		`{"foo":"hellostr", "bar": 456}`: 1,
+		`{"foo": this-is-bad-json}`:      0,
+		`Z1nt3BFxAp0CjMlq`:               0,
+	}
+
+	for reqBody, expectedCount := range cases {
+		w, r := httpstub.New(c)
+		r.Body = ioutil.NopCloser(strings.NewReader(reqBody))
+
+		invoked := 0
+		handler := func(_ HttpContext, _ *sampleRequest, _ *sampleResponse) error {
+			invoked++
+			return nil
+		}
+		JsonHandler(handler)(w, r)
+
+		c.Assert(invoked, Equals, expectedCount)
+	}
+}
+
 func (_ *MurphySuite) TestJsonHandler_badRequest(c *C) {
 	w, r := httpstub.New(c)
-	r.Body = ioutil.NopCloser(strings.NewReader(`{"foo": not-a-string}`))
+	r.Body = ioutil.NopCloser(strings.NewReader(`{"foo": this-is-bad-json}`))
 
 	JsonHandler(correct)(w, r)
 
@@ -50,24 +83,77 @@ func (_ *MurphySuite) TestJsonHandler_badRequest(c *C) {
 	c.Assert(w.RecordedBody, Equals, "{\"err\":\"unable to parse request\"}\n")
 }
 
-func (_ *MurphySuite) TestJsonHandler_good(c *C) {
-	w, r := httpstub.New(c)
-	r.Body = ioutil.NopCloser(strings.NewReader("{}"))
+func (_ *MurphySuite) TestJsonHandler_goodParsedDefaults(c *C) {
+	cases := []string{
+		``,
+		`{}`,
+	}
 
-	JsonHandler(correct)(w, r)
+	for _, reqBody := range cases {
+		w, r := httpstub.New(c)
+		r.Body = ioutil.NopCloser(strings.NewReader(reqBody))
 
-	c.Assert(w.RecordedCode, Equals, http.StatusOK)
-	c.Assert(w.RecordedBody, Equals, "{}\n")
+		var exportedReq *sampleRequest
+		handler := func(_ HttpContext, req *sampleRequest, _ *sampleResponse) error {
+			exportedReq = req
+			return nil
+		}
+		JsonHandler(handler)(w, r)
+
+		c.Assert(exportedReq.Foo, Equals, "")
+		c.Assert(exportedReq.Bar, Equals, 0)
+	}
 }
 
-func (_ *MurphySuite) TestJsonHandler_goodEmptyBody(c *C) {
+func (_ *MurphySuite) TestJsonHandler_goodParsedValues(c *C) {
 	w, r := httpstub.New(c)
-	r.Body = ioutil.NopCloser(strings.NewReader(""))
+	r.Body = ioutil.NopCloser(strings.NewReader(`{"foo": "hihihi", "bar": 2014}`))
 
-	JsonHandler(correct)(w, r)
+	var exportedReq *sampleRequest
+	handler := func(_ HttpContext, req *sampleRequest, _ *sampleResponse) error {
+		exportedReq = req
+		return nil
+	}
+	JsonHandler(handler)(w, r)
 
-	c.Assert(w.RecordedCode, Equals, http.StatusOK)
-	c.Assert(w.RecordedBody, Equals, "{}\n")
+	c.Assert(exportedReq.Foo, Equals, "hihihi")
+	c.Assert(exportedReq.Bar, Equals, 2014)
+}
+
+func (_ *MurphySuite) TestJsonHandler_goodEmptyRequest(c *C) {
+	cases := []string{
+		"",
+		"{}",
+	}
+
+	for _, reqBody := range cases {
+		w, r := httpstub.New(c)
+		r.Body = ioutil.NopCloser(strings.NewReader(reqBody))
+
+		JsonHandler(correct)(w, r)
+
+		c.Assert(w.RecordedCode, Equals, http.StatusOK)
+		c.Assert(w.RecordedBody, Equals, "{}\n")
+	}
+}
+
+func (_ *MurphySuite) TestJsonHandler_goodEmptyRequestStruct(c *C) {
+	cases := []string{
+		``,
+		`{}`,
+		`{"moo": "cow"}`,
+		`{"wat": 888}`,
+	}
+
+	for _, reqBody := range cases {
+		w, r := httpstub.New(c)
+		r.Body = ioutil.NopCloser(strings.NewReader(reqBody))
+
+		JsonHandler(correctEmptyRequestStruct)(w, r)
+
+		c.Assert(w.RecordedCode, Equals, http.StatusOK)
+		c.Assert(w.RecordedBody, Equals, "{}\n")
+	}
 }
 
 func (_ *MurphySuite) TestJsonHandler_fails(c *C) {
