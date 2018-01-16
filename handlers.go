@@ -52,13 +52,9 @@ func (m *handlerMaker) makeHandler() func(http.ResponseWriter, *http.Request) {
 		w := &responseWriter{actualW, false}
 
 		requestPtr := reflect.New(m.requestType)
-		numReqFields := reflect.ValueOf(requestPtr.Elem().Interface()).NumField()
 
 		err := json.NewDecoder(r.Body).Decode(requestPtr.Interface())
-		if err == io.EOF && numReqFields > 0 {
-			handleBadRequestErr(w, r, BadRequestErrorf("unable to parse request; did not expect empty body"))
-			return
-		} else if err != nil && err != io.EOF {
+		if err != nil && err != io.EOF {
 			handleBadRequestErr(w, r, BadRequestErrorf("unable to parse request"))
 			return
 		}
