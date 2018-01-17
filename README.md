@@ -1,7 +1,7 @@
 # Murphy
 
-[![Build Status](https://travis-ci.org/pascallouisperez/murphy.svg?branch=master)](https://travis-ci.org/pascallouisperez/murphy)
-[![GoDoc](https://godoc.org/github.com/pascallouisperez/murphy?status.svg)](https://godoc.org/github.com/pascallouisperez/murphy)
+[![Build Status](https://circleci.com/gh/helloeave/murphy.png?circle-token=:circle-token)](https://circleci.com/gh/helloeave/murphy)
+[![GoDoc](https://godoc.org/github.com/helloeave/murphy?status.svg)](https://godoc.org/github.com/helloeave/murphy)
 
 _An opinionated view on JSON APIs, and a short implementation in Golang._
 
