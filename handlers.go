@@ -1,13 +1,13 @@
 package murphy
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"reflect"
 
 	"github.com/golang/glog"
+	"github.com/helloeave/json"
 	"github.com/pascallouisperez/goutil/errors"
 	"github.com/pascallouisperez/reflext"
 	go_uuid "github.com/satori/go.uuid"
@@ -72,10 +72,10 @@ func (m *handlerMaker) makeHandler() func(http.ResponseWriter, *http.Request) {
 			if err, ok := returns[0].Interface().(*BadRequestError); ok {
 				handleBadRequestErr(w, r, err)
 				return
-			} else {
-				handleErr(w, r, returns[0].Interface().(error))
-				return
 			}
+
+			handleErr(w, r, returns[0].Interface().(error))
+			return
 		}
 
 		if w.skipResponse {
@@ -83,6 +83,7 @@ func (m *handlerMaker) makeHandler() func(http.ResponseWriter, *http.Request) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		encoder := json.NewEncoder(w)
+		encoder.SetRescueNilSlice(true)
 		if err := encoder.Encode(responsePtr.Interface()); err != nil {
 			handleErr(w, r, err)
 			return
