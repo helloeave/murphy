@@ -83,7 +83,7 @@ func (m *handlerMaker) makeHandler() func(http.ResponseWriter, *http.Request) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		encoder := json.NewEncoder(w)
-		encoder.SetRescueNilSlice(true)
+		encoder.SetNilSafeCollection(true)
 		if err := encoder.Encode(responsePtr.Interface()); err != nil {
 			handleErr(w, r, err)
 			return
