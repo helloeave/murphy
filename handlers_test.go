@@ -214,5 +214,5 @@ func (_ *MurphySuite) TestJsonSlices_marshalling(c *C) {
 	JsonHandler(nilCollectionHandler)(w, r)
 
 	c.Assert(w.RecordedCode, Equals, http.StatusOK)
-	c.Assert(w.RecordedBody, Equals, "{\"nil_slice\":[],\"ptr_nil_slice\":null,\"nil_map\":{},\"ptr_nil_map\":null,\"another_value\":\"\"}\n")
+	c.Assert(w.RecordedBody, Equals, `{"nil_slice":[],"ptr_nil_slice":null,"nil_map":{},"ptr_nil_map":null,"another_value":""}`+"\n")
 }
