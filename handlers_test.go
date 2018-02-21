@@ -1,12 +1,12 @@
 package murphy
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
 
+	"github.com/helloeave/json"
 	"github.com/pascallouisperez/goutil/errors"
 	"github.com/pascallouisperez/goutil/httpstub"
 
@@ -23,14 +23,25 @@ type sampleRequest struct {
 	Foo string `json:"foo"`
 	Bar int    `json:"bar"`
 }
-
 type sampleResponse struct{}
+
+type collectionWithNils struct {
+	NilSlice     []int                   `json:"nil_slice"`
+	PNilSlice    *[]int                  `json:"ptr_nil_slice"`
+	NilMap       map[string]interface{}  `json:"nil_map"`
+	PNilMap      *map[string]interface{} `json:"ptr_nil_map"`
+	AnotherValue string                  `json:"another_value"`
+}
 
 func correct(ctx HttpContext, request *sampleRequest, response *sampleResponse) error {
 	return nil
 }
 
 func correctEmptyRequestStruct(ctx HttpContext, _ *struct{}, response *sampleResponse) error {
+	return nil
+}
+
+func nilCollectionHandler(ctx HttpContext, request *collectionWithNils, response *collectionWithNils) error {
 	return nil
 }
 
@@ -195,4 +206,13 @@ func (_ *MurphySuite) TestBadRequestError_marshalling(c *C) {
 	data, err := json.Marshal(BadRequestErrorf("the_err_here"))
 	c.Assert(err, IsNil)
 	c.Assert(`{"err":"the_err_here"}`, Equals, string(data))
+}
+
+func (_ *MurphySuite) TestJsonSlices_marshalling(c *C) {
+	w, r := httpstub.New(c)
+	r.Body = ioutil.NopCloser(strings.NewReader(`{"nil_slice":[],"ptr_nil_slice":null,"nil_map":{},"ptr_nil_map":null,"another_value":""}`))
+	JsonHandler(nilCollectionHandler)(w, r)
+
+	c.Assert(w.RecordedCode, Equals, http.StatusOK)
+	c.Assert(w.RecordedBody, Equals, "{\"nil_slice\":[],\"ptr_nil_slice\":null,\"nil_map\":{},\"ptr_nil_map\":null,\"another_value\":\"\"}\n")
 }
