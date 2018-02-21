@@ -25,14 +25,7 @@ type sampleRequest struct {
 }
 type sampleResponse struct{}
 
-type marshalHandlerRequest struct {
-	NilSlice     []int                   `json:"nil_slice"`
-	PNilSlice    *[]int                  `json:"ptr_nil_slice"`
-	NilMap       map[string]interface{}  `json:"nil_map"`
-	PNilMap      *map[string]interface{} `json:"ptr_nil_map"`
-	AnotherValue string                  `json:"another_value"`
-}
-type marshalHandlerResponse struct {
+type collectionWithNils struct {
 	NilSlice     []int                   `json:"nil_slice"`
 	PNilSlice    *[]int                  `json:"ptr_nil_slice"`
 	NilMap       map[string]interface{}  `json:"nil_map"`
@@ -48,12 +41,7 @@ func correctEmptyRequestStruct(ctx HttpContext, _ *struct{}, response *sampleRes
 	return nil
 }
 
-func marshalHandler(ctx HttpContext, request *marshalHandlerRequest, response *marshalHandlerResponse) error {
-	response.NilSlice = request.NilSlice
-	response.PNilSlice = request.PNilSlice
-	response.NilMap = request.NilMap
-	response.PNilMap = request.PNilMap
-	response.AnotherValue = request.AnotherValue
+func nilCollectionHandler(ctx HttpContext, request *collectionWithNils, response *collectionWithNils) error {
 	return nil
 }
 
@@ -223,7 +211,7 @@ func (_ *MurphySuite) TestBadRequestError_marshalling(c *C) {
 func (_ *MurphySuite) TestJsonSlices_marshalling(c *C) {
 	w, r := httpstub.New(c)
 	r.Body = ioutil.NopCloser(strings.NewReader(`{"nil_slice":[],"ptr_nil_slice":null,"nil_map":{},"ptr_nil_map":null,"another_value":""}`))
-	JsonHandler(marshalHandler)(w, r)
+	JsonHandler(nilCollectionHandler)(w, r)
 
 	c.Assert(w.RecordedCode, Equals, http.StatusOK)
 	c.Assert(w.RecordedBody, Equals, "{\"nil_slice\":[],\"ptr_nil_slice\":null,\"nil_map\":{},\"ptr_nil_map\":null,\"another_value\":\"\"}\n")
