@@ -123,7 +123,7 @@ func canShowErr(r *http.Request) bool {
 }
 
 func handleBadRequestErr(w http.ResponseWriter, r *http.Request, theErr *BadRequestError) {
-	errId := go_uuid.NewV4().String()
+	errId := go_uuid.Must(go_uuid.NewV4()).String()
 	w.Header().Set("X-Errid", errId)
 	w.WriteHeader(http.StatusBadRequest)
 	encoder := json.NewEncoder(w)
@@ -134,7 +134,7 @@ func handleBadRequestErr(w http.ResponseWriter, r *http.Request, theErr *BadRequ
 }
 
 func handleErr(w http.ResponseWriter, r *http.Request, theErr error) {
-	errId := go_uuid.NewV4().String()
+	errId := go_uuid.Must(go_uuid.NewV4()).String()
 	w.Header().Set("X-Errid", errId)
 	w.WriteHeader(http.StatusInternalServerError)
 	if canShowErr(r) {
